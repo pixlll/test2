@@ -1,0 +1,666 @@
+openapi: 3.0.1
+info:
+  title: JSON data set store
+  description: |
+    This is a WebDAV-like API which enables you to read/write data sets stored and versioned in GitLab.
+  version: '1'
+servers:
+  - url: /glds
+paths:
+  '/dataSources/{data_source_id}/meta':
+    post:
+      summary: Initialize repo metadata
+      description: |
+        Initializes repo metadata.
+      operationId: init_meta
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      responses:
+        '201':
+          description: The request succeeded and the repository metadata is initialized.
+          content: {}
+        '404':
+          description: The datasource does not exist.
+          content: {}
+        '409':
+          description: Repository metadata is already initialized.
+          content: {}
+      x-openapi-router-controller: glds.controllers.default_controller
+  '/dataSources/{data_source_id}/tables':
+    get:
+      summary: Get a collection of tables
+      description: |
+        Returns a collection of table definitions available from the data source. You may provide a specific Ref to get metadata of, otherwise actual (GITLAB_ACTUAL_REF) version is returned.
+      operationId: get_tables
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: ref
+          in: query
+          description: 'The name of branch, tag or commit.'
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+            default: master
+      responses:
+        '200':
+          description: The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tableCollection'
+      x-openapi-router-controller: glds.controllers.default_controller
+    post:
+      summary: Create new table
+      description: |
+        Creates a new table definition with no data.
+      operationId: create_table
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      requestBody:
+        description: The new table definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/table'
+              x-body-name: table
+        required: true
+      responses:
+        '201':
+          description: The request succeeded and the table was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/table'
+        '404':
+          description: The datasource does not exist.
+          content: {}
+        '409':
+          description: Table with that name already exists.
+          content: {}
+      x-openapi-router-controller: glds.controllers.default_controller
+  '/dataSources/{data_source_id}/tables/{table_id}':
+    get:
+      summary: Get a table
+      description: |
+        Returns information about a single table based on its unique name. You may provide a specific Ref to get metadata of, otherwise actual (GITLAB_ACTUAL_REF) version is returned.
+      operationId: get_table
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: table_id
+          in: path
+          description: The URL encoded (i.e. percent encoded) form of the table's name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: ref
+          in: query
+          description: 'The name of branch, tag or commit.'
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+            default: master
+      responses:
+        '200':
+          description: The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/table'
+        '404':
+          description: The table does not exist.
+          content: {}
+      x-openapi-router-controller: glds.controllers.default_controller
+    delete:
+      summary: Delete a table
+      description: |
+        Deletes single table by name.
+      operationId: delete_table
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: table_id
+          in: path
+          description: The URL encoded (i.e. percent encoded) form of the table's name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      responses:
+        '204':
+          description: The request succeeded.
+          content: {}
+        '404':
+          description: The table does not exist.
+          content: {}
+      x-openapi-router-controller: glds.controllers.default_controller
+  '/dataSources/{data_source_id}/tables/{table_id}/columns':
+    get:
+      summary: /NYI/ Get all table columns
+      description: |
+        Returns list of column definitions. You may provide a specific Ref to get metadata of, otherwise actual (GITLAB_ACTUAL_REF) version is returned.
+      operationId: get_columns
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: table_id
+          in: path
+          description: The URL encoded (i.e. percent encoded) form of the table's name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: ref
+          in: query
+          description: 'The name of branch, tag or commit.'
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+            default: master
+      responses:
+        '200':
+          description: The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/columnCollection'
+        '404':
+          description: |
+            Possible reasons:
+            The datasource does not exist.
+            The table does not exist.
+            The ref does not exist.
+          content: {}
+      x-openapi-router-controller: glds.controllers.default_controller
+    post:
+      summary: /NYI/ Add new column
+      description: |
+        Adds a new column definition with null data.
+      operationId: add_column
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: table_id
+          in: path
+          description: The URL encoded (i.e. percent encoded) form of the table's name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: before
+          in: query
+          description: |
+            Existing column name to insert new column before.
+            If not specified, column is added to the end.
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+      requestBody:
+        description: The new column definition.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/column'
+              x-body-name: column
+        required: true
+      responses:
+        '201':
+          description: The request succeeded and the column was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/column'
+        '404':
+          description: |
+            Possible reasons: 
+            The datasource does not exist.
+            The table does not exist. 
+            The _before_ column does not exist.
+          content: {}
+        '409':
+          description: Column with that name already exists.
+          content: {}
+      x-openapi-router-controller: glds.controllers.default_controller
+  '/dataSources/{data_source_id}/tables/{table_id}/columns/{column_id}':
+    get:
+      summary: /NYI/ Get a column
+      description: |
+        Returns information about a single column based on its unique name. You may provide a specific Ref to get metadata of, otherwise actual (GITLAB_ACTUAL_REF) version is returned.
+      operationId: get_column
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: table_id
+          in: path
+          description: The URL encoded (i.e. percent encoded) form of the table's name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: column_id
+          in: path
+          description: The URL encoded (i.e. percent encoded) form of the column's name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: ref
+          in: query
+          description: 'The name of branch, tag or commit.'
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+            default: master
+      responses:
+        '200':
+          description: The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/column'
+        '404':
+          description: |
+            Possible reasons:
+            The datasource does not exist.
+            The table does not exist.
+            The column does not exist.
+            The ref does not exist.
+          content: {}
+      x-openapi-router-controller: glds.controllers.default_controller
+    delete:
+      summary: /NYI/ Delete a column
+      description: |
+        Deletes single column by name.
+      operationId: drop_column
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: table_id
+          in: path
+          description: The URL encoded (i.e. percent encoded) form of the table's name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: column_id
+          in: path
+          description: The URL encoded (i.e. percent encoded) form of the column's name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      responses:
+        '204':
+          description: The request succeeded.
+          content: {}
+        '404':
+          description: |
+            Possible reasons:
+            The datasource does not exist.
+            The table does not exist.
+            The column does not exist.
+          content: {}
+      x-openapi-router-controller: glds.controllers.default_controller
+  '/dataSources/{data_source_id}/tables/{table_id}/rows':
+    get:
+      summary: Get all table rows
+      description: |
+        Returns rows data array. You may provide a specific Ref to get data of, otherwise actual (GITLAB_ACTUAL_REF) version is returned.
+      operationId: get_rows_for_table
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: table_id
+          in: path
+          description: The URL encoded (i.e. percent encoded) form of the table's name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: ref
+          in: query
+          description: 'The name of branch, tag or commit.'
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+            default: master
+      responses:
+        '200':
+          description: The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rowCollection'
+        '404':
+          description: |
+            Possible reasons: 
+            The table does not exist. 
+            The ref does not exist.
+          content: {}
+      x-openapi-router-controller: glds.controllers.default_controller
+    put:
+      summary: Replace all table rows
+      description: |
+        Create new version of rows data array.
+      operationId: set_rows_for_table
+      parameters:
+        - name: data_source_id
+          in: path
+          description: GitLab project name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: table_id
+          in: path
+          description: The URL encoded (i.e. percent encoded) form of the table's name.
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      requestBody:
+        description: The new rows array.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/rowCollection'
+              x-body-name: rows
+        required: true
+      responses:
+        '200':
+          description: The request succeeded and the data is updated.
+          content: {}
+        '404':
+          description: The table does not exist.
+          content: {}
+      x-codegen-request-body-name: rows
+      x-openapi-router-controller: glds.controllers.default_controller
+components:
+  schemas:
+    table:
+      title: Table
+      type: object
+      properties:
+        name:
+          type: string
+          description: |
+            The unique name of the table. Must be a sasname.
+        label:
+          type: string
+          description: |
+            The user visible name of this table. This value might vary depending on the Accept-Language header.
+        type:
+          type: string
+          description: |
+            The type of this table.
+        attributes:
+          type: object
+          properties: {}
+          description: |
+            Additional table-specific attributes.
+        version:
+          type: integer
+          description: The table schema version.
+      additionalProperties: false
+      description: Information about a table.
+      example:
+        name: AIRLINES
+        label: Airlines
+        type: table
+        attributes:
+          rowCount: 6048
+          columnCount: 8
+        version: 1
+    tableCollection:
+      title: Table Collection
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the collection "tables" in the context of the request.
+        start:
+          type: integer
+          description: The 0-based index of the result candidates to start returning.
+        limit:
+          type: integer
+          description: The maximum number of results requested.
+        count:
+          type: integer
+          description: The number of results returned in the collection.
+        items:
+          type: array
+          description: An array that contains Table resources.
+          items:
+            $ref: '#/components/schemas/table'
+        version:
+          type: integer
+          description: The collection schema version.
+      description: A pageable collection of table objects.
+      example:
+        name: tables
+        version: 2
+        count: 730
+        start: 0
+        limit: 2
+        items:
+          - name: GENERAL_PARAMETERS
+            type: BUSINESS
+            attributes:
+              rowCount: 60
+              columnCount: 5
+            version: 1
+          - name: MAP_CASH_RULES
+            type: TREE
+            attributes:
+              rowCount: 148
+              columnCount: 8
+              treeType: CLASSIFY
+            version: 1
+    row:
+      title: Row
+      minProperties: 1
+      type: object
+      additionalProperties:
+        anyOf:
+          - type: string
+            nullable: true
+          - type: integer
+            nullable: true
+          - type: number
+            nullable: true
+      description: |
+        Representation of a row object.
+        Rows with no columns are not allowed, and values must be primitive.
+      example:
+        Name: Alice
+        Sex: true
+        Age: 18
+    rowCollection:
+      title: Row Collection
+      type: array
+      description: A full collection of table rows.
+      example:
+        - Name: Alfred
+          Sex: false
+          Age: 14
+        - Name: Alice
+          Sex: true
+          Age: 18
+      items:
+        $ref: '#/components/schemas/row'
+    column:
+      title: Column
+      type: object
+      properties:
+        name:
+          type: string
+          description: |
+            The unique name of the column. Must be a sasname.
+        label:
+          type: string
+          description: |
+            The localized name of this column. This value might vary depending on the Accept-Language header.
+        index:
+          type: integer
+          description: |
+            The column's 0-based index if this is supported by the provider data service. If it is unsupported, it is omitted.
+        type:
+          type: string
+          description: |
+            The type of the column.
+        charLength:
+          type: integer
+          description: |
+            Max chars the column could contain (string types only).
+        attributes:
+          type: object
+          properties: {}
+          description: |
+            Additional column-specific attributes.
+        version:
+          type: integer
+          description: The column schema version.
+      description: Information about a column.
+      example:
+        name: CPTY_CPCL_CLASS_CD
+        type: STRING
+        index: 1
+        charLength: 30
+        attributes:
+          treeFieldType: COND
+        version: 1
+    columnCollection:
+      title: Column Collection
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the collection "columns" in the context of the request.
+        tableName:
+          type: string
+          description: |
+            The name of the requested table for this columns in the context of the request.
+        start:
+          type: integer
+          description: The 0-based index of the result candidates to start returning.
+        limit:
+          type: integer
+          description: The maximum number of results requested.
+        count:
+          type: integer
+          description: The number of results returned in the collection.
+        items:
+          type: array
+          description: An array that contains Column resources.
+          items:
+            $ref: '#/components/schemas/column'
+        version:
+          type: integer
+          description: The collection schema version.
+      description: A pageable collection of column objects.
+      example:
+        name: columns
+        tableName: MAP_STD_RULES
+        count: 10
+        start: 0
+        limit: 10
+        items:
+          - name: CPTY_CPCL_CLASS_CD
+            type: STRING
+            index: 0
+            charLength: 30
+            attributes:
+              treeFieldType: COND
+          - name: VALUE_PRIORITY
+            type: NUMBER
+            index: 1
+            attributes:
+              treeFieldType: EXPR
+        version: 1
